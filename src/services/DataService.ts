@@ -4,18 +4,14 @@ import { S3 } from 'aws-sdk';
 import { config as appConfig } from './config';
 import { generateRandomId2 } from '../utils/Utils';
 
-declare var process: {
-  env: {
-    AWS_ACCESS_KEY_ID: string;
-    AWS_SECRET_ACCESS_KEY: string;
-  };
-};
+// declare var process: {
+//   env: {
+//     AWS_ACCESS_KEY_ID: string;
+//     AWS_SECRET_ACCESS_KEY: string;
+//   };
+// };
 
 export class DataService {
-  private s3Client = new S3({
-    region: appConfig.REGION,
-  });
-
   public async createSpace(iCreateSpace: ICreateSpaceState) {
     if (iCreateSpace.photo) {
       const photoUrl = await this.uploadPublicFile(
@@ -39,9 +35,12 @@ export class DataService {
   private async uploadPublicFile(file: File, bucket: string) {
     const fileName = generateRandomId2() + file.name;
     const uploadResult = await new S3({
+      apiVersion: 'latest',
       region: appConfig.REGION,
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      credentials: {
+        accessKeyId: appConfig.AWS_ACCESS_KEY_ID,
+        secretAccessKey: appConfig.AWS_SECRET_ACCESS_KEY,
+      },
     })
       .upload({
         Bucket: bucket,
