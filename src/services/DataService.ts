@@ -4,10 +4,10 @@ import { S3, config } from 'aws-sdk';
 import { config as appConfig } from './config';
 import { generateRandomId2 } from '../utils/Utils';
 
+require('dotenv').config();
+
 config.update({
   region: appConfig.REGION,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
 
 export class DataService {
