@@ -1,14 +1,15 @@
 import { ICreateSpaceState } from '../components/spaces/CreateSpaces';
 import { Space } from '../model/Model';
-import { S3, config } from 'aws-sdk';
+import { S3 } from 'aws-sdk';
 import { config as appConfig } from './config';
 import { generateRandomId2 } from '../utils/Utils';
 
-require('dotenv').config();
-
-config.update({
-  region: appConfig.REGION,
-});
+declare var process: {
+  env: {
+    AWS_ACCESS_KEY_ID: string;
+    AWS_SECRET_ACCESS_KEY: string;
+  };
+};
 
 export class DataService {
   private s3Client = new S3({
@@ -39,6 +40,8 @@ export class DataService {
     const fileName = generateRandomId2() + file.name;
     const uploadResult = await new S3({
       region: appConfig.REGION,
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     })
       .upload({
         Bucket: bucket,
