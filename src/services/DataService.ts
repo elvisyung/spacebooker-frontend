@@ -6,8 +6,8 @@ import { generateRandomId2 } from '../utils/Utils';
 
 config.update({
   region: appConfig.REGION,
-  accessKeyId: appConfig.AWS_ACCESS_KEY_ID,
-  secretAccessKey: appConfig.AWS_SECRET_ACCESS_KEY,
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
 
 export class DataService {
