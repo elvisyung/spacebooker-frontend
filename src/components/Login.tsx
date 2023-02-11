@@ -60,7 +60,7 @@ export class Login extends React.Component<LoginProps, LoginState> {
       if (this.state.loginSuccessful) {
         loginMessage = <label>Login Successful</label>;
       } else {
-        loginMessage = <label>Login Successful</label>;
+        loginMessage = <label>Login Fail</label>;
       }
     }
 
