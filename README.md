@@ -1,3 +1,12 @@
+# Description:
+## Developed a full-stack serverless application utilising Amazon Web Services (Lambda, ApiGateway, DynamoDB, Cognito), React/Typescript and deployed as CloudFormation to understand CDK infrastructures. 
+
+# Deployment Site:
+## https://d2yy4q4qvy8q8f.cloudfront.net/
+
+# Video-Walkthrough Demo: 
+## 
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
