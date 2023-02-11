@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import { Space } from '../../model/Model';
 import { DataService } from '../../services/DataService';
+import { User } from '../../model/Model';
 import { SpaceComponent } from './SpaceComponent';
 import { ConfirmModalComponent } from './ConfirmModalComponent';
 import { Link } from 'react-router-dom';
@@ -13,6 +14,7 @@ interface SpacesState {
 
 interface SpacesProps {
   dataService: DataService;
+  user: User | undefined;
 }
 
 export class Spaces extends Component<SpacesProps, SpacesState> {
@@ -75,11 +77,22 @@ export class Spaces extends Component<SpacesProps, SpacesState> {
     });
   }
 
+  renderCreateSpacesLink() {
+    if (this.props.user?.isAdmin) {
+      return (
+        <div>
+          <Link to='/createSpace'>Create space</Link>
+          <br></br>
+        </div>
+      );
+    }
+  }
+
   render() {
     return (
       <div>
         <h2>Welcome to the Spaces page!</h2>
-        <Link to='/createSpace'>Create Space</Link> <br />
+        {this.renderCreateSpacesLink()}
         {this.renderSpaces()}
         <ConfirmModalComponent
           close={this.closeModal}

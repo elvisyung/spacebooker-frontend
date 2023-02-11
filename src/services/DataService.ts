@@ -1,17 +1,31 @@
 import { ICreateSpaceState } from '../components/spaces/CreateSpaces';
-import { Space } from '../model/Model';
+import { Reservation, ReservationState, Space, User } from '../model/Model';
 import { S3 } from 'aws-sdk';
 import { config as appConfig } from './config';
 import { generateRandomId2 } from '../utils/Utils';
 
-// declare var process: {
-//   env: {
-//     AWS_ACCESS_KEY_ID: string;
-//     AWS_SECRET_ACCESS_KEY: string;
-//   };
-// };
-
 export class DataService {
+  private user: User | undefined;
+  private s3Client: S3 | undefined;
+
+  /**
+   * Due to a bug, the s3 client doesn't load the credentials after they are created
+   * Here we are initializing it lazily
+   */
+  private getS3Client(): S3 {
+    if (this.s3Client) {
+      return this.s3Client;
+    } else {
+      this.s3Client = new S3({
+        region: appConfig.REGION,
+      });
+      return this.s3Client;
+    }
+  }
+  public setUser(user: User) {
+    this.user = user;
+  }
+
   public async createSpace(iCreateSpace: ICreateSpaceState) {
     if (iCreateSpace.photo) {
       const photoUrl = await this.uploadPublicFile(
@@ -30,6 +44,10 @@ export class DataService {
     const resultJSON = await result.json();
 
     return JSON.stringify(resultJSON.id);
+  }
+
+  public async uploadProfilePicture(file: File) {
+    return await this.uploadPublicFile(file, appConfig.PROFILE_PHOTOS_BUCKET);
   }
 
   private async uploadPublicFile(file: File, bucket: string) {
@@ -52,20 +70,109 @@ export class DataService {
     return uploadResult.Location;
   }
 
+  private getUserIdToken() {
+    if (this.user) {
+      return this.user.cognitoUser
+        .getSignInUserSession()!
+        .getIdToken()
+        .getJwtToken();
+    } else {
+      return '';
+    }
+  }
+
   public async getSpaces(): Promise<Space[]> {
-    const requestUrl = appConfig.api.spacesUrl;
-    const requestResult = await fetch(requestUrl, {
-      method: 'GET',
-    });
-    const responseJSON = await requestResult.json();
-    return responseJSON;
+    if (this.user) {
+      console.log(`Using token: ${this.getUserIdToken()}`);
+      const requestUrl = appConfig.api.spacesUrl;
+      const requestResult = await fetch(requestUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: this.getUserIdToken(),
+        },
+      });
+      const responseJSON = await requestResult.json();
+      return responseJSON;
+    } else {
+      return [];
+    }
   }
 
   public async reserveSpace(spaceId: string): Promise<string | undefined> {
-    if (spaceId === '123') {
-      return '5555';
+    const requestUrl = appConfig.api.reservationsUrl;
+    const requestResult = await fetch(requestUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: this.getUserIdToken(),
+      },
+      body: JSON.stringify({
+        spaceId: spaceId,
+        user: this.user?.userName,
+      }),
+    });
+    const responseJSON = await requestResult.json();
+    return responseJSON.id;
+  }
+
+  public async getAllReservations(): Promise<Reservation[]> {
+    if (this.user?.isAdmin) {
+      const requestUrl = appConfig.api.reservationsUrl;
+      const requestResult = await fetch(requestUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: this.getUserIdToken(),
+        },
+      });
+      const responseJSON = await requestResult.json();
+      return responseJSON;
     } else {
-      return undefined;
+      return [];
     }
+  }
+
+  public async getUserReservations(): Promise<Reservation[]> {
+    if (this.user) {
+      const requestUrl = `${appConfig.api.reservationsUrl}?user=${this.user.userName}`;
+      const requestResult = await fetch(requestUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: this.getUserIdToken(),
+        },
+      });
+      const responseJSON = await requestResult.json();
+      return responseJSON;
+    } else {
+      return [];
+    }
+  }
+
+  public async deleteReservation(reservationId: string): Promise<any> {
+    const requestUrl = `${appConfig.api.reservationsUrl}?reservationId=${reservationId}`;
+    const requestResult = await fetch(requestUrl, {
+      method: 'DELETE',
+      headers: {
+        Authorization: this.getUserIdToken(),
+      },
+    });
+    const responseJSON = await requestResult.json();
+    return responseJSON.id;
+  }
+
+  public async updateReservation(
+    reservationId: string,
+    reservationState: ReservationState
+  ): Promise<any> {
+    const requestUrl = `${appConfig.api.reservationsUrl}?reservationId=${reservationId}`;
+    const requestResult = await fetch(requestUrl, {
+      method: 'PUT',
+      headers: {
+        Authorization: this.getUserIdToken(),
+      },
+      body: JSON.stringify({
+        state: reservationState,
+      }),
+    });
+    const responseJSON = await requestResult.json();
+    return responseJSON;
   }
 }

@@ -1,7 +1,9 @@
 import React, { SyntheticEvent } from 'react';
-import { Navigate } from 'react-router-dom';
-import { User } from '../model/Model';
-import { AuthService } from '../services/AuthService';
+// import { Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { User } from '../../model/Model';
+import { AuthService } from '../../services/AuthService';
+import './Forms.css';
 
 interface LoginProps {
   authService: AuthService;
@@ -11,8 +13,7 @@ interface LoginProps {
 interface LoginState {
   userName: string;
   password: string;
-  loginAttempted: boolean;
-  loginSuccessful: boolean;
+  loginStatusMessage: string;
 }
 
 interface CustomEvent {
@@ -23,8 +24,7 @@ export class Login extends React.Component<LoginProps, LoginState> {
   state: LoginState = {
     userName: '',
     password: '',
-    loginAttempted: false,
-    loginSuccessful: false,
+    loginStatusMessage: '',
   };
 
   private setUserName(event: CustomEvent) {
@@ -37,52 +37,54 @@ export class Login extends React.Component<LoginProps, LoginState> {
 
   private async handleSubmit(event: SyntheticEvent) {
     event.preventDefault();
-    this.setState({ loginAttempted: true });
     const result = await this.props.authService.login(
       this.state.userName,
       this.state.password
     );
     if (result) {
-      this.setState({
-        loginSuccessful: true,
-      });
+      this.setState({});
       this.props.setUser(result);
     } else {
       this.setState({
-        loginSuccessful: false,
+        loginStatusMessage: 'Login failed. Please check your credentials',
       });
     }
   }
 
-  render() {
-    let loginMessage: any;
-    if (this.state.loginAttempted) {
-      if (this.state.loginSuccessful) {
-        loginMessage = <label>Login Successful</label>;
-      } else {
-        loginMessage = <label>Login Successful</label>;
-      }
-    }
-
+  private renderLoginForm() {
     return (
       <div>
         <h2>Please Login</h2>
         <form onSubmit={(e) => this.handleSubmit(e)}>
+          <label>User name</label>
           <input
             value={this.state.userName}
             onChange={(e) => this.setUserName(e)}
           />
-          <br />
+          <label>Password</label>
           <input
             value={this.state.password}
-            type='password'
             onChange={(e) => this.setPassword(e)}
+            type='password'
           />
-          <br />
           <input type='submit' value='Login' />
         </form>
-        {this.state.loginSuccessful === true ? <Navigate to='/profile' /> : ''}
-        {loginMessage}
+        <label className='error'>
+          {this.state.loginStatusMessage}
+          <br></br>
+          <br></br>
+        </label>
+        <br></br>
+      </div>
+    );
+  }
+
+  render() {
+    return (
+      <div>
+        {this.renderLoginForm()}
+        <br></br>
+        Don't have an account? <Link to='signup'>Sign up</Link>
       </div>
     );
   }
